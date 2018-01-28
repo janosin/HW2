@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+	
+	<body>
+		{% for dc in get_flashed_messages() %}
+		<b>Fields that were a problem:</b><br><br>
+				{% for key in dc %}
+						* <b>{{ key }}</b> - <i> {{ dc[key][0] }}</i> <br>
+				{% endfor %}
+		{% endfor %}
+
+		<br><br>
+			
+			<form action="http://localhost:5000/album_result" method="POST">
+				{{ form.hidden_tag() }}
+				{{ form.name.label }} {{ form.name() }}<br>
+				{{ form.like.label }} {{ form.like() }}<br>
+				{{ form.submit() }}<br>
+			</form>
+		
+
+		
+	</body>
+</html>

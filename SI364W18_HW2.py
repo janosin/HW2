@@ -11,10 +11,12 @@
 #############################
 ##### IMPORT STATEMENTS #####
 #############################
-from flask import Flask, request, render_template, url_for
+from flask import Flask, request, render_template, url_for, flash, redirect
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, RadioField, ValidationError
 from wtforms.validators import Required
+import requests
+import json
 
 #####################
 ##### APP SETUP #####
@@ -26,8 +28,10 @@ app.config['SECRET_KEY'] = 'hardtoguessstring'
 ####################
 ###### FORMS #######
 ####################
-
-
+class AlbumEntryForm(FlaskForm):
+    name = StringField("Enter the name of an album:", validators=[Required()])
+    like = RadioField("How much do you like this album? (1 low, 3 high)", choices = [('1','1'), ('2','2'),('3','3')], validators=[Required()])
+    submit = SubmitField('Submit')
 
 
 ####################
@@ -43,6 +47,55 @@ def hello_world():
 def hello_user(name):
     return '<h1>Hello {0}<h1>'.format(name)
 
+
+@app.route('/artistform')
+def artistform():
+    return render_template('artistform.html')
+
+
+@app.route('/artistinfo', methods = ['GET', 'POST'])
+def artistinfo():
+    if request.method == 'GET':
+        artist = request.args['artist']
+        baseurl = "https://itunes.apple.com/search"
+        params = {"term": artist}
+        r = requests.get(baseurl, params = params)
+        text = r.text
+        python_obj = json.loads(text)
+    return render_template('artist_info.html', objects = python_obj['results'])
+    
+@app.route('/artist_links')
+def artistlinks():
+    return render_template('artist_links.html')
+    
+
+@app.route('/specific/song/<artist>')
+def specificsong(artist):
+    
+    baseurl = "https://itunes.apple.com/search"
+    params = {"term": artist}
+    r = requests.get(baseurl, params = params)
+    text = r.text
+    python_obj = json.loads(text)
+    return render_template('specific_artist.html', results= python_obj['results'])
+    
+    
+@app.route('/album_entry')
+def albumentry():
+    form = AlbumEntryForm()
+    return render_template('album_entry.html', form  = form)
+    
+@app.route('/album_result', methods = ['GET', 'POST'])
+def albumresult():
+    form = AlbumEntryForm()
+    if form.validate_on_submit():
+        name = form.name.data
+        like = form.like.data
+        return render_template('album_data.html', like = like, name = name)
+    flash(form.errors)
+    return redirect('/album_entry')
+
+    
 
 if __name__ == '__main__':
     app.run(use_reloader=True,debug=True)
